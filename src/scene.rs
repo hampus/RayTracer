@@ -57,8 +57,8 @@ impl RayTracable for Sphere {
 
         let position = ray.at(distance);
         Some(RayIntersection {
-            distance: distance,
-            position: position,
+            distance,
+            position,
             normal: Unit::new_unchecked((position - self.center) / self.radius),
         })
     }
@@ -78,7 +78,7 @@ impl RayTracable for Floor {
             return None;
         }
         Some(RayIntersection {
-            distance: distance,
+            distance,
             position: ray.at(distance),
             normal: Unit::new_unchecked(vector![0.0, 1.0, 0.0]),
         })

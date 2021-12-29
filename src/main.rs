@@ -1,7 +1,6 @@
 use image::RgbImage;
 use nalgebra::point;
 use raytracer::camera::Camera;
-use raytracer::common::RayTracable;
 use raytracer::render::render;
 use raytracer::render::RenderConfig;
 use raytracer::scene::Floor;
@@ -12,15 +11,15 @@ fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let width = 1920;
     let config = RenderConfig {
-        width: width,
+        width,
         height: ((width as f64) / aspect_ratio).round() as u32,
-        aspect_ratio: aspect_ratio,
-        samples_per_pixel: 2000,
+        aspect_ratio,
+        samples_per_pixel: 300,
         max_depth: 50,
         tile_size: 16,
     };
 
-    let scene: Box<dyn RayTracable> = Box::new(SceneList {
+    let scene = SceneList {
         objects: vec![
             Box::new(Sphere {
                 center: point![0.0, 1.0, -5.0],
@@ -32,7 +31,7 @@ fn main() {
             }),
             Box::new(Floor { y: 0.0 }),
         ],
-    });
+    };
 
     let camera = Camera::new(
         point![0.0, 1.0, 0.0],

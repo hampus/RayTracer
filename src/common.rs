@@ -26,7 +26,7 @@ pub struct RayIntersection {
     pub distance: Float,
 }
 
-pub trait RayTracable: Sync {
+pub trait RayTracable: Sync + Send {
     fn trace_ray(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<RayIntersection>;
 }
 

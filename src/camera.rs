@@ -2,15 +2,14 @@ use crate::common::Direction;
 use crate::common::Float;
 use crate::common::Point;
 use crate::common::Ray;
-use crate::common::Vector;
+
 use nalgebra::point;
 use nalgebra::vector;
 use nalgebra::Matrix4;
 use nalgebra::Point2;
-use nalgebra::Point3;
+
 use nalgebra::Transform3;
 use nalgebra::Unit;
-use nalgebra::Vector4;
 
 pub struct Camera {
     pub origin: Point,         // Origin of the lens
@@ -44,11 +43,11 @@ impl Camera {
         let transform = translate * scale;
 
         Camera {
-            origin: origin,
+            origin,
             direction: Unit::new_normalize(focus_vector),
-            focal_length: focal_length,
+            focal_length,
             focus_distance: focus_vector.norm(),
-            f_number: f_number,
+            f_number,
             transform: Transform3::from_matrix_unchecked(transform),
         }
     }

@@ -25,8 +25,8 @@ pub struct RenderConfig {
     pub tile_size: u32,
 }
 
-pub fn render(config: &RenderConfig, scene: &Box<dyn RayTracable>, camera: &Camera) -> RgbImage {
-    let tiles = generate_shuffled_tiles(&config);
+pub fn render(config: &RenderConfig, scene: &dyn RayTracable, camera: &Camera) -> RgbImage {
+    let tiles = generate_shuffled_tiles(config);
     println!("Number of tiles: {}", tiles.len());
 
     let pb = ProgressBar::new(tiles.len() as u64);
@@ -54,7 +54,7 @@ pub fn render(config: &RenderConfig, scene: &Box<dyn RayTracable>, camera: &Came
 fn render_tile(
     tile: RenderTile,
     config: &RenderConfig,
-    scene: &Box<dyn RayTracable>,
+    scene: &dyn RayTracable,
     camera: &Camera,
 ) -> (RenderTile, RgbImage) {
     let mut rng = thread_rng();
@@ -80,7 +80,7 @@ fn render_tile(
 
 fn render_sample(
     uv: Point2<Float>,
-    scene: &Box<dyn RayTracable>,
+    scene: &dyn RayTracable,
     camera: &Camera,
     max_depth: u32,
 ) -> Vector {
@@ -90,14 +90,14 @@ fn render_sample(
 
 fn render_ray(
     ray: &Ray,
-    scene: &Box<dyn RayTracable>,
+    scene: &dyn RayTracable,
     min_dist: Float,
     max_dist: Float,
     max_depth: u32,
 ) -> Vector {
     if max_depth == 0 {
         vector![0.0, 0.0, 0.0]
-    } else if let Some(intersection) = scene.trace_ray(&ray, min_dist, max_dist) {
+    } else if let Some(intersection) = scene.trace_ray(ray, min_dist, max_dist) {
         let new_direction = random_direction_on_hemisphere_cosine_weighted(&intersection.normal);
         let new_ray = Ray {
             origin: intersection.position,
@@ -165,12 +165,6 @@ fn generate_tiles(width: u32, height: u32, tile_size: u32) -> Vec<RenderTile> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn integer_division_truncates() {
-        assert_eq!(7 / 3, 2);
-        assert_eq!(-3 / 2, -1);
-    }
 
     #[test]
     fn integer_div_round_up_returns_correct_values() {
