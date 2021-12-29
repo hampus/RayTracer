@@ -3,6 +3,8 @@ use crate::common::Point;
 use crate::common::Ray;
 use crate::common::RayIntersection;
 use crate::common::RayTracable;
+use crate::common::Vector;
+use crate::srgb::srgb_to_rgb;
 use nalgebra::vector;
 use nalgebra::Unit;
 
@@ -29,6 +31,7 @@ impl RayTracable for SceneList {
 pub struct Sphere {
     pub center: Point,
     pub radius: Float,
+    pub color: Vector,
 }
 
 impl RayTracable for Sphere {
@@ -60,6 +63,7 @@ impl RayTracable for Sphere {
             distance,
             position,
             normal: Unit::new_unchecked((position - self.center) / self.radius),
+            color: self.color,
         })
     }
 }
@@ -77,10 +81,17 @@ impl RayTracable for Floor {
         if distance < min_dist || distance > max_dist {
             return None;
         }
+        let position = ray.at(distance);
+        let color = if ((position.x as i64) + (position.z as i64)) % 2 == 0 {
+            srgb_to_rgb(vector![0.9, 0.9, 0.9])
+        } else {
+            srgb_to_rgb(vector![0.2, 0.2, 0.2])
+        };
         Some(RayIntersection {
             distance,
-            position: ray.at(distance),
+            position,
             normal: Unit::new_unchecked(vector![0.0, 1.0, 0.0]),
+            color,
         })
     }
 }

@@ -49,7 +49,11 @@ impl Camera {
         );
         let transform = isometry.to_homogeneous() * translate * scale;
 
-        let aperture_radius = focal_length / f_number / 2.0;
+        let aperture_radius = if f_number == 0.0 {
+            0.0
+        } else {
+            focal_length / f_number / 2.0
+        };
         let lens_transformation = isometry.to_homogeneous() * Matrix4::new_scaling(aperture_radius);
 
         Camera {

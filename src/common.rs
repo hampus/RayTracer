@@ -24,6 +24,7 @@ pub struct RayIntersection {
     pub position: Point,
     pub normal: Direction,
     pub distance: Float,
+    pub color: Vector,
 }
 
 pub trait RayTracable: Sync + Send {

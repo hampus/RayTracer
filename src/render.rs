@@ -14,6 +14,7 @@ use nalgebra::{point, vector, Point2, Vector2};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use rand_distr::{Distribution, Normal};
 use rayon::prelude::*;
 use std::cmp;
 
@@ -30,6 +31,10 @@ pub fn render(config: &RenderConfig, scene: &dyn RayTracable, camera: &Camera) -
     let tiles = generate_shuffled_tiles(config);
     println!("Number of tiles: {}", tiles.len());
 
+    let aa_sigma = calc_gauss_sigma();
+    let aa_dist = Normal::new(0.0, aa_sigma).unwrap();
+    println!("Gaussian sigma for AA: {}", aa_sigma);
+
     let pb = ProgressBar::new(tiles.len() as u64);
     pb.set_style(
         ProgressStyle::default_bar().template(
@@ -41,7 +46,7 @@ pub fn render(config: &RenderConfig, scene: &dyn RayTracable, camera: &Camera) -
     let rendered_tiles: Vec<(RenderTile, RgbImage)> = tiles
         .into_par_iter()
         .progress_with(pb)
-        .map(|tile| render_tile(tile, config, scene, camera))
+        .map(|tile| render_tile(tile, config, scene, camera, aa_dist))
         .collect();
 
     let mut img = RgbImage::new(config.width, config.height);
@@ -57,6 +62,7 @@ fn render_tile(
     config: &RenderConfig,
     scene: &dyn RayTracable,
     camera: &Camera,
+    aa_dist: Normal<Float>,
 ) -> (RenderTile, RgbImage) {
     let mut rng = thread_rng();
     let mut img = RgbImage::new(tile.size.x, tile.size.y);
@@ -64,8 +70,8 @@ fn render_tile(
         for x in 0..tile.size.x {
             let mut colour = vector![0.0, 0.0, 0.0];
             for _ in 0..config.samples_per_pixel {
-                let sx: Float = rng.gen::<Float>() - 0.5;
-                let sy: Float = rng.gen::<Float>() - 0.5;
+                let sx: Float = aa_dist.sample(&mut rng);
+                let sy: Float = aa_dist.sample(&mut rng);
                 let uv = point![
                     (((tile.offset.x + x) as Float + sx) / config.width as Float - 0.5) * 2.0,
                     (0.5 - ((tile.offset.y + y) as Float + sy) / config.height as Float) * 2.0
@@ -77,6 +83,16 @@ fn render_tile(
         }
     }
     (tile, img)
+}
+
+fn calc_gauss_sigma() -> Float {
+    // Frequency response of perceptual brightness at half sampling frequency
+    let gauss_target_perceptual: Float = 0.5;
+    // Adjust for a gamma of 0.42 (close to human perception)
+    let gauss_target: Float = gauss_target_perceptual.powf(1.0 / 0.42);
+    // Calculate sigma based on this frequency response at 0.5 Hz
+    let sigma: Float = 2.0_f64.sqrt() * (-gauss_target.ln()).sqrt() / std::f64::consts::PI;
+    sigma
 }
 
 fn render_sample(
@@ -104,9 +120,10 @@ fn render_ray(
             origin: intersection.position,
             direction: new_direction,
         };
-        0.5 * render_ray(&new_ray, scene, min_dist, max_dist, max_depth - 1)
+        let ray_light = render_ray(&new_ray, scene, min_dist, max_dist, max_depth - 1);
+        ray_light.component_mul(&intersection.color)
     } else {
-        srgb_to_rgb(vector![0.5, 0.55, 1.0])
+        srgb_to_rgb(vector![0.9, 0.9, 0.9])
     }
 }
 
