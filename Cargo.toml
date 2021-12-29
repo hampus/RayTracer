@@ -11,3 +11,4 @@ indicatif = {version = "0.16.2", features = ["rayon"]}
 nalgebra = "0.29.0"
 rand = "0.8.4"
 rayon = "1.5.1"
+approx = "0.5.0"

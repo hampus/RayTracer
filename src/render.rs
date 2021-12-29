@@ -6,6 +6,7 @@ use crate::common::RayTracable;
 use crate::common::Vector;
 use crate::common::INFINITY;
 use crate::srgb::rgb_to_srgb;
+use crate::srgb::srgb_to_rgb;
 use image::{GenericImage, RgbImage};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use nalgebra::Unit;
@@ -105,7 +106,7 @@ fn render_ray(
         };
         0.5 * render_ray(&new_ray, scene, min_dist, max_dist, max_depth - 1)
     } else {
-        vector![0.5, 0.5, 1.0]
+        srgb_to_rgb(vector![0.5, 0.55, 1.0])
     }
 }
 

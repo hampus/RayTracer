@@ -2,6 +2,7 @@ use crate::common::Direction;
 use crate::common::Float;
 use crate::common::Point;
 use crate::common::Ray;
+use nalgebra::Isometry3;
 
 use nalgebra::point;
 use nalgebra::vector;
@@ -40,7 +41,12 @@ impl Camera {
         let scale_x = scale_y * aspect_ratio;
         let scale = Matrix4::new_nonuniform_scaling(&vector![scale_x, scale_y, 1.0]);
         let translate = Matrix4::new_translation(&vector![0.0, 0.0, -focus_distance]);
-        let transform = translate * scale;
+        let isometry = Isometry3::face_towards(
+            &origin,
+            &(origin + (origin - look_at)),
+            &vector![0.0, 1.0, 0.0],
+        );
+        let transform = isometry.to_homogeneous() * translate * scale;
 
         Camera {
             origin,
