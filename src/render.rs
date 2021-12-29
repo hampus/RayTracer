@@ -85,7 +85,7 @@ fn render_sample(
     camera: &Camera,
     max_depth: u32,
 ) -> Vector {
-    let ray = camera.generate_ray(uv);
+    let ray = camera.generate_ray(uv, random_circle_disk_point());
     render_ray(&ray, scene, 0.001, INFINITY, max_depth)
 }
 
@@ -125,6 +125,17 @@ fn random_direction_on_hemisphere_cosine_weighted(normal: &Direction) -> Directi
                     return d;
                 }
             }
+        }
+    }
+}
+
+fn random_circle_disk_point() -> Point2<Float> {
+    let mut rng = thread_rng();
+    loop {
+        let v = vector![rng.gen::<Float>(), rng.gen::<Float>()];
+        let v = (v - vector![0.5, 0.5]) * 2.0;
+        if v.norm_squared() <= 1.0 {
+            return Point2::origin() + v;
         }
     }
 }

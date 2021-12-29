@@ -14,7 +14,7 @@ fn main() {
         width,
         height: ((width as f64) / aspect_ratio).round() as u32,
         aspect_ratio,
-        samples_per_pixel: 100,
+        samples_per_pixel: 150,
         max_depth: 50,
         tile_size: 16,
     };
@@ -29,15 +29,27 @@ fn main() {
                 center: point![-1.5, 0.5, -5.0],
                 radius: 0.5,
             }),
+            Box::new(Sphere {
+                center: point![1.5, 0.5, -3.5],
+                radius: 0.5,
+            }),
+            Box::new(Sphere {
+                center: point![4.5, 0.8, -10.0],
+                radius: 0.8,
+            }),
+            Box::new(Sphere {
+                center: point![4.5, 2.1, -10.0],
+                radius: 0.5,
+            }),
             Box::new(Floor { y: 0.0 }),
         ],
     };
 
     let camera = Camera::new(
         point![0.0, 1.5, -1.0],
-        point![0.0, 0.0, -5.0],
+        point![0.0, 1.0, -5.0],
         90.0,
-        2.0,
+        1.4,
         aspect_ratio,
     );
 

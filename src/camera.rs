@@ -19,6 +19,7 @@ pub struct Camera {
     pub focus_distance: Float, // Distance from the lens to the focal plane
     pub f_number: Float,       // f-number: f/f_number
     transform: Transform3<Float>,
+    lens_transformation: Transform3<Float>,
 }
 
 const SENSOR_DIAGONAL_MM: Float = 43.3;
@@ -48,6 +49,9 @@ impl Camera {
         );
         let transform = isometry.to_homogeneous() * translate * scale;
 
+        let aperture_radius = focal_length / f_number / 2.0;
+        let lens_transformation = isometry.to_homogeneous() * Matrix4::new_scaling(aperture_radius);
+
         Camera {
             origin,
             direction: Unit::new_normalize(focus_vector),
@@ -55,14 +59,20 @@ impl Camera {
             focus_distance: focus_vector.norm(),
             f_number,
             transform: Transform3::from_matrix_unchecked(transform),
+            lens_transformation: Transform3::from_matrix_unchecked(lens_transformation),
         }
     }
 
-    pub fn generate_ray(&self, screen_position: Point2<Float>) -> Ray {
+    pub fn generate_ray(
+        &self,
+        screen_position: Point2<Float>,
+        lens_position: Point2<Float>,
+    ) -> Ray {
         let screen_3d_point: Point = point![screen_position.x, screen_position.y, 0.0];
+        let origin = self.lens_transformation * point![lens_position.x, lens_position.y, 0.0];
         Ray {
-            origin: self.origin,
-            direction: Unit::new_normalize(self.transform * screen_3d_point - self.origin),
+            origin,
+            direction: Unit::new_normalize(self.transform * screen_3d_point - origin),
         }
     }
 }
