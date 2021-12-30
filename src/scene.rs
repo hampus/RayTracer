@@ -1,12 +1,13 @@
 use crate::common::Float;
+use crate::common::Material;
 use crate::common::Point;
 use crate::common::Ray;
 use crate::common::RayIntersection;
 use crate::common::RayTracable;
-use crate::common::Vector;
 use crate::srgb::srgb_to_rgb;
 use nalgebra::vector;
 use nalgebra::Unit;
+use std::sync::Arc;
 
 pub struct SceneList {
     pub objects: Vec<Box<dyn RayTracable>>,
@@ -31,7 +32,7 @@ impl RayTracable for SceneList {
 pub struct Sphere {
     pub center: Point,
     pub radius: Float,
-    pub color: Vector,
+    pub material: Arc<Box<dyn Material>>,
 }
 
 impl RayTracable for Sphere {
@@ -63,13 +64,14 @@ impl RayTracable for Sphere {
             distance,
             position,
             normal: Unit::new_unchecked((position - self.center) / self.radius),
-            color: self.color,
+            material: self.material.clone(),
         })
     }
 }
 
 pub struct Floor {
     pub y: Float,
+    pub material: Arc<Box<dyn Material>>,
 }
 
 impl RayTracable for Floor {
@@ -81,17 +83,11 @@ impl RayTracable for Floor {
         if distance < min_dist || distance > max_dist {
             return None;
         }
-        let position = ray.at(distance);
-        let color = if ((position.x as i64) + (position.z as i64)) % 2 == 0 {
-            srgb_to_rgb(vector![0.9, 0.9, 0.9])
-        } else {
-            srgb_to_rgb(vector![0.2, 0.2, 0.2])
-        };
         Some(RayIntersection {
             distance,
-            position,
+            position: ray.at(distance),
             normal: Unit::new_unchecked(vector![0.0, 1.0, 0.0]),
-            color,
+            material: self.material.clone(),
         })
     }
 }

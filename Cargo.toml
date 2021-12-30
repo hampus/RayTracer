@@ -13,3 +13,6 @@ rand = "0.8.4"
 rayon = "1.5.1"
 approx = "0.5.0"
 rand_distr = "0.4.2"
+
+[profile.release]
+debug = true

@@ -1,5 +1,4 @@
 use crate::camera::Camera;
-use crate::common::Direction;
 use crate::common::Float;
 use crate::common::Ray;
 use crate::common::RayTracable;
@@ -9,7 +8,6 @@ use crate::srgb::rgb_to_srgb;
 use crate::srgb::srgb_to_rgb;
 use image::{GenericImage, RgbImage};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-use nalgebra::Unit;
 use nalgebra::{point, vector, Point2, Vector2};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
@@ -17,6 +15,7 @@ use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
 use rayon::prelude::*;
 use std::cmp;
+use std::time::Instant;
 
 pub struct RenderConfig {
     pub width: u32,
@@ -33,7 +32,7 @@ pub fn render(config: &RenderConfig, scene: &dyn RayTracable, camera: &Camera) -
 
     let aa_sigma = calc_gauss_sigma();
     let aa_dist = Normal::new(0.0, aa_sigma).unwrap();
-    println!("Gaussian sigma for AA: {}", aa_sigma);
+    println!("Gaussian sigma for AA: {:.5}", aa_sigma);
 
     let pb = ProgressBar::new(tiles.len() as u64);
     pb.set_style(
@@ -43,11 +42,23 @@ pub fn render(config: &RenderConfig, scene: &dyn RayTracable, camera: &Camera) -
     );
     pb.tick();
 
+    let start = Instant::now();
+
     let rendered_tiles: Vec<(RenderTile, RgbImage)> = tiles
         .into_par_iter()
         .progress_with(pb)
         .map(|tile| render_tile(tile, config, scene, camera, aa_dist))
         .collect();
+
+    let duration = (Instant::now() - start).as_secs_f64();
+    let num_samples = (config.width * config.height * config.samples_per_pixel) as f64;
+    let samples_per_sec = num_samples / duration;
+    println!(
+        "Rendered {:.3} million samples in {:.3} seconds. {:.5} million samples/second.",
+        num_samples / 1e6,
+        duration,
+        samples_per_sec / 1e6
+    );
 
     let mut img = RgbImage::new(config.width, config.height);
     for (tile, tile_img) in rendered_tiles {
@@ -115,34 +126,15 @@ fn render_ray(
     if max_depth == 0 {
         vector![0.0, 0.0, 0.0]
     } else if let Some(intersection) = scene.trace_ray(ray, min_dist, max_dist) {
-        let new_direction = random_direction_on_hemisphere_cosine_weighted(&intersection.normal);
-        let new_ray = Ray {
-            origin: intersection.position,
-            direction: new_direction,
-        };
-        let ray_light = render_ray(&new_ray, scene, min_dist, max_dist, max_depth - 1);
-        ray_light.component_mul(&intersection.color)
+        if let Some(scatter_ray) = intersection.material.scatter_ray(ray, &intersection) {
+            let scatter_light =
+                render_ray(&scatter_ray.ray, scene, min_dist, max_dist, max_depth - 1);
+            scatter_light.component_mul(&scatter_ray.attenuation)
+        } else {
+            vector![0.0, 0.0, 0.0]
+        }
     } else {
         srgb_to_rgb(vector![0.9, 0.9, 0.9])
-    }
-}
-
-fn random_direction_on_hemisphere_cosine_weighted(normal: &Direction) -> Direction {
-    let mut rng = thread_rng();
-    loop {
-        let v = vector![rng.gen::<Float>(), rng.gen::<Float>(), rng.gen::<Float>()];
-        let d = Unit::new_normalize((v - vector![0.5, 0.5, 0.5]) * 2.0);
-        if d.norm_squared() <= 1.0 {
-            let cos_of_normal_angle = d.dot(normal);
-            // Accept direction with probability relative to cos(normal_angle)
-            if rng.gen::<Float>() <= cos_of_normal_angle.abs() {
-                if cos_of_normal_angle < 0.0 {
-                    return -d;
-                } else {
-                    return d;
-                }
-            }
-        }
     }
 }
 

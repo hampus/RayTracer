@@ -1,4 +1,5 @@
 use nalgebra;
+use std::sync::Arc;
 
 pub type Float = f64;
 pub type Point = nalgebra::Point3<Float>;
@@ -19,12 +20,22 @@ impl Ray {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct RayIntersection {
     pub position: Point,
     pub normal: Direction,
     pub distance: Float,
-    pub color: Vector,
+    pub material: Arc<Box<dyn Material>>,
+}
+
+#[derive(Debug)]
+pub struct ScatteredRay {
+    pub attenuation: Vector,
+    pub ray: Ray,
+}
+
+pub trait Material: std::fmt::Debug + Sync + Send {
+    fn scatter_ray(&self, ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay>;
 }
 
 pub trait RayTracable: Sync + Send {
