@@ -1,5 +1,4 @@
 use nalgebra;
-use std::sync::Arc;
 
 pub type Float = f64;
 pub type Point = nalgebra::Point3<Float>;
@@ -21,11 +20,11 @@ impl Ray {
 }
 
 #[derive(Debug)]
-pub struct RayIntersection {
+pub struct RayIntersection<'a> {
     pub position: Point,
     pub normal: Direction,
     pub distance: Float,
-    pub material: Arc<Box<dyn Material>>,
+    pub material: &'a dyn Material,
 }
 
 #[derive(Debug)]

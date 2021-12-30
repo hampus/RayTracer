@@ -17,7 +17,7 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter_ray(&self, ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay> {
+    fn scatter_ray(&self, _ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay> {
         Some(ScatteredRay {
             ray: generate_lambertian_ray(intersection),
             attenuation: self.color,
@@ -32,10 +32,6 @@ pub struct Metal {
 
 impl Material for Metal {
     fn scatter_ray(&self, ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay> {
-        let reflection = Unit::new_normalize(
-            2.0 * (-ray.direction).dot(&intersection.normal) * intersection.normal.into_inner()
-                + ray.direction.into_inner(),
-        );
         Some(ScatteredRay {
             ray: generate_reflection_ray(ray, intersection),
             attenuation: self.color,
@@ -69,7 +65,7 @@ pub struct FloorMaterial {
     pub color: Vector,
 }
 impl Material for FloorMaterial {
-    fn scatter_ray(&self, ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay> {
+    fn scatter_ray(&self, _ray: &Ray, intersection: &RayIntersection) -> Option<ScatteredRay> {
         let position = intersection.position;
         Some(ScatteredRay {
             ray: generate_lambertian_ray(intersection),

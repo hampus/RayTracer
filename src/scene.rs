@@ -4,10 +4,8 @@ use crate::common::Point;
 use crate::common::Ray;
 use crate::common::RayIntersection;
 use crate::common::RayTracable;
-use crate::srgb::srgb_to_rgb;
 use nalgebra::vector;
 use nalgebra::Unit;
-use std::sync::Arc;
 
 pub struct SceneList {
     pub objects: Vec<Box<dyn RayTracable>>,
@@ -32,7 +30,7 @@ impl RayTracable for SceneList {
 pub struct Sphere {
     pub center: Point,
     pub radius: Float,
-    pub material: Arc<Box<dyn Material>>,
+    pub material: Box<dyn Material>,
 }
 
 impl RayTracable for Sphere {
@@ -64,14 +62,14 @@ impl RayTracable for Sphere {
             distance,
             position,
             normal: Unit::new_unchecked((position - self.center) / self.radius),
-            material: self.material.clone(),
+            material: self.material.as_ref(),
         })
     }
 }
 
 pub struct Floor {
     pub y: Float,
-    pub material: Arc<Box<dyn Material>>,
+    pub material: Box<dyn Material>,
 }
 
 impl RayTracable for Floor {
@@ -87,7 +85,7 @@ impl RayTracable for Floor {
             distance,
             position: ray.at(distance),
             normal: Unit::new_unchecked(vector![0.0, 1.0, 0.0]),
-            material: self.material.clone(),
+            material: self.material.as_ref(),
         })
     }
 }
